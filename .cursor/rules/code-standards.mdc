@@ -1,0 +1,105 @@
+---
+description: TypeScript, styling, API, and file organization conventions
+globs: "**/*.{ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# Code Standards
+
+## General
+
+- Code must follow production-grade SaaS architecture principles.
+- Keep modules small, composable, and single-responsibility.
+- Business logic must never be mixed with UI or API route handlers.
+- Prefer explicit implementations over implicit abstractions.
+- Avoid duplicating logic — extract shared behavior into services.
+- All side effects (DB writes, API calls, queues) must be explicit and predictable.
+
+---
+
+## TypeScript
+
+- Strict mode is mandatory across the entire codebase.
+- Avoid `any` — use explicit types or narrow inferred types.
+- External inputs (API requests, webhooks, queue payloads) must be validated before usage (Zod).
+- Shared types must live in `/types` or be inferred from Prisma schema where possible.
+- Do not use type assertions (`as`) unless absolutely necessary and justified.
+
+---
+
+## Next.js (Framework Conventions)
+
+- Default to Server Components unless client interactivity is required.
+- Use `"use client"` only when browser APIs or stateful UI is needed.
+- Route handlers (`/app/api`) must remain thin and only:
+  - validate input
+  - authenticate user
+  - call service layer
+- Never place business logic inside route handlers.
+- Prefer server-side execution for secure operations (auth, billing, workflows).
+
+---
+
+## Styling
+
+- Use Tailwind CSS exclusively for styling.
+- Do not introduce inline styles or arbitrary CSS files unless necessary.
+- Follow a consistent spacing and design system (no random values).
+- UI components must be reusable and composable (prefer `/components/ui` pattern).
+- Maintain consistent visual hierarchy across pages.
+
+---
+
+## API Routes
+
+- Every API route must:
+  1. Validate input using Zod
+  2. Authenticate user session
+  3. Enforce workspace + RBAC permissions
+  4. Delegate logic to service layer
+- API responses must follow a consistent structure:
+  - `{ success: boolean, data?: any, error?: string }`
+- No direct database or external API calls inside route handlers.
+- Long-running operations must be delegated to background workers.
+
+---
+
+## Data & Storage
+
+- PostgreSQL is the single source of truth for structured data.
+- All relational data must be stored in the database (users, workspaces, workflows, runs, billing).
+- Redis is strictly for ephemeral/system operations:
+  - queues (BullMQ)
+  - rate limiting
+  - temporary execution state
+- Large or generated artifacts must not be stored in PostgreSQL directly.
+
+---
+
+## Background Jobs (Critical)
+
+- All AI executions must run via BullMQ workers.
+- API routes must never execute long-running tasks directly.
+- Job payloads must be serializable and validated before enqueueing.
+- Workers must be isolated from HTTP request lifecycle.
+
+---
+
+## File Organization
+
+- `/app` → UI + API routes (thin controllers only)
+- `/services` → Business logic layer (core system rules)
+- `/workers` → Background job processors (queue consumers)
+- `/lib` → Shared utilities (Redis, Prisma, helpers)
+- `/db` → Prisma schema and database migrations
+- `/types` → Shared TypeScript types and interfaces
+- `/components` → Reusable UI components
+
+
+## Execution Style
+
+- Always implement features in small, incremental steps.
+- Never generate full end-to-end features in one response.
+- Stop after each logical step and wait for confirmation or testing.
+- Prefer iterative building: scaffold → implement → verify → extend.
+- Each step must be independently runnable and testable.

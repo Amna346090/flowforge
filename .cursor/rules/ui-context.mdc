@@ -1,0 +1,159 @@
+---
+description: Theme, colors, typography, and UI layout patterns
+globs: "**/*.{tsx,css}"
+alwaysApply: false
+---
+
+# UI Context
+
+## Theme
+
+FlowForge uses a **dark-first SaaS design system** inspired by developer tools and modern workflow platforms.
+
+The interface is designed to feel like a **technical control plane**:
+- deep dark backgrounds
+- layered surfaces for hierarchy
+- subtle borders for structure
+- strong accent color for actions and states
+- minimal visual noise, maximum clarity
+
+No light mode exists. The product is intentionally optimized for long-duration professional use.
+
+---
+
+## Colors
+
+All styling must use CSS variables only. No hardcoded hex values.
+
+| Role            | CSS Variable        | Value (example) |
+| --------------- | ------------------- | --------------- |
+| Page background | `--bg-base`        | #0B0F17 |
+| Surface         | `--bg-surface`     | #111827 |
+| Elevated surface| `--bg-elevated`    | #1A2232 |
+| Primary text    | `--text-primary`   | #E5E7EB |
+| Muted text      | `--text-muted`     | #9CA3AF |
+| Primary accent  | `--accent-primary` | #6366F1 |
+| Accent hover    | `--accent-hover`   | #4F46E5 |
+| Border          | `--border-default` | #243041 |
+| Error           | `--state-error`    | #EF4444 |
+| Success         | `--state-success`  | #22C55E |
+| Warning         | `--state-warning`  | #F59E0B |
+
+---
+
+## Typography
+
+Typography follows a clean developer-tool aesthetic with high readability.
+
+| Role      | Font                | Variable      |
+| --------- | ------------------- | ------------- |
+| UI text   | Inter / Geist Sans  | `--font-sans` |
+| Code/mono | JetBrains Mono      | `--font-mono` |
+
+Rules:
+- UI text must be sans-serif only
+- Code, logs, and workflow outputs must use monospace
+- Avoid decorative or display fonts
+
+---
+
+## Border Radius
+
+The system uses a consistent radius scale to maintain visual hierarchy:
+
+| Context           | Class              |
+| ----------------- | ------------------ |
+| Inline elements   | `rounded-sm`       |
+| Buttons / inputs  | `rounded-md`       |
+| Cards / panels    | `rounded-lg`       |
+| Modals / overlays | `rounded-xl`       |
+
+---
+
+## Component Library
+
+- Built on top of shadcn/ui + Tailwind CSS
+- All base UI components live in `/components/ui`
+- Components must be composable and reusable
+- No custom one-off UI logic inside pages
+
+Rules:
+- Prefer extending existing UI components over rewriting
+- Use variant-based styling patterns (button variants, card variants)
+- Keep UI logic separate from business logic
+
+---
+
+## Layout Patterns
+
+### Dashboard Layout
+- Left sidebar navigation (fixed width)
+- Main content area (scrollable)
+- Optional right panel for details/inspector views
+
+---
+
+### Workflow Editor Layout
+- Center canvas for workflow definition
+- Sidebar for nodes / inputs
+- Inspector panel for selected node configuration
+
+---
+
+### Modals
+- Centered overlay
+- Background blur with dark opacity layer
+- Escape key must close modal
+
+---
+
+### Tables / Data Views
+- Dense layout for execution history
+- Row hover highlights
+- Status badges for workflow runs
+
+---
+
+### Navigation
+- Persistent sidebar navigation
+- Active route highlighting using accent color
+- Icons + labels (collapsed mode supported)
+
+---
+
+## Icons
+
+- Lucide React is the default icon system
+- Stroke-based icons only
+- Standard sizing:
+  - `h-4 w-4` → inline text/icons
+  - `h-5 w-5` → buttons
+  - `h-6 w-6` → headers / emphasis
+
+Rules:
+- Do not mix icon libraries
+- Do not use filled icons
+- Keep icon usage minimal and functional
+
+---
+
+## UI Principles
+
+- Information density > decorative design
+- Every UI element must serve a functional purpose
+- Prioritize clarity over visual complexity
+- Maintain consistent spacing scale across all components
+- Avoid unnecessary animations unless they communicate state
+
+---
+
+## Interaction Patterns
+
+- Loading states must always be explicit (skeletons or spinners)
+- Actions that trigger workflows must show immediate feedback
+- Execution states must be visually distinguishable:
+  - queued
+  - running
+  - success
+  - failed
+- Real-time updates should update UI without full refresh

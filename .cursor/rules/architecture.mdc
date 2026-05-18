@@ -1,0 +1,86 @@
+---
+description: Stack, system boundaries, storage model, and invariants
+alwaysApply: true
+---
+
+# Architecture Context
+
+## Stack
+
+| Layer         | Technology                        | Role |
+|--------------|----------------------------------|------|
+| Framework     | Next.js (App Router) + TypeScript | Full-stack framework (UI + API routes) |
+| UI            | Tailwind CSS + shadcn/ui         | UI components and styling system |
+| Auth          | Auth.js (NextAuth)               | Authentication and session management |
+| Database      | PostgreSQL + Prisma              | Primary relational data store |
+| Queue System  | Redis + BullMQ                   | Asynchronous job processing |
+| Billing       | Stripe                           | Subscription and payment processing |
+| Validation    | Zod                              | Request and data validation |
+
+---
+
+## System Boundaries
+
+- `/app/api` — Thin API layer only. Responsible for validation, auth checks, and calling service layer. No business logic.
+- `/services` — Core business logic layer (workflows, billing, users, RBAC). Must remain framework-agnostic where possible.
+- `/workers` — Background job processors (AI execution, workflow runs). Must never depend on HTTP request lifecycle.
+- `/lib` — Shared utilities (Redis client, Prisma client, helpers).
+- `/db` — Prisma schema, migrations, and database configuration.
+- `/modules` — Feature-based domain grouping (optional abstraction layer for scalability).
+
+---
+
+## Storage Model
+
+- **PostgreSQL (Primary Database)**:
+  Stores structured application data:
+  - Users
+  - Workspaces (multi-tenancy boundary)
+  - Memberships & roles
+  - Workflows
+  - Workflow executions (runs)
+  - Billing state (subscriptions, plans)
+  - API keys
+  - Audit logs
+
+- **Redis (Ephemeral / System Layer)**:
+  Used for:
+  - Job queues (BullMQ)
+  - Rate limiting counters
+  - Temporary execution state
+  - Pub/sub for realtime updates
+
+- **External APIs (Stripe / OpenAI)**:
+  - Stripe: billing events via webhooks
+  - OpenAI: workflow execution engine
+
+---
+
+## Auth and Access Model
+
+- Authentication is session-based via Auth.js.
+- Every request is scoped to a **user session + workspace context**.
+- Every resource belongs to a workspace (multi-tenant isolation model).
+- Access control is enforced via RBAC:
+  - Owner → full access
+  - Admin → manage workflows and members
+  - Member → execute workflows only
+
+- All mutations require:
+  - valid session
+  - workspace membership validation
+  - role-based permission check
+
+---
+
+## Invariants
+
+1. API routes must remain thin and must never contain business logic.
+2. All long-running operations (AI calls, workflow execution) must be executed via background workers using Redis + BullMQ.
+3. Every database query must be scoped to a workspace (no cross-tenant data access allowed).
+4. Stripe webhook handling must be idempotent to prevent duplicate billing updates.
+5. Business logic must only exist inside `/services` layer, never inside UI or API routes.
+6. Workflow execution must always be asynchronous and never block HTTP requests.
+7. Redis is used only for ephemeral/system operations (queues, rate limiting), never as primary data storage.
+
+The progress-tracker.mdc file must be updated after any meaningful code or architecture change.

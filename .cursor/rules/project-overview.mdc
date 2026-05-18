@@ -1,0 +1,118 @@
+---
+description: Project goals, user flows, features, and scope
+alwaysApply: true
+---
+
+# FlowForge
+
+## Overview
+
+FlowForge is a multi-tenant SaaS platform that enables teams to define, execute, and manage AI-powered workflows through an asynchronous, event-driven architecture.
+
+It is designed for teams that need reliable AI automation with structured execution, background processing, and secure access control across shared workspaces.
+
+---
+
+## Goals
+
+1. Provide a scalable workflow execution system powered by asynchronous job processing.
+2. Enforce strict multi-tenant isolation with role-based access control across all resources.
+3. Ensure reliable execution of AI tasks through queue-based architecture and worker separation.
+4. Support subscription-based monetization using Stripe billing.
+5. Provide real-time visibility into workflow execution state.
+
+---
+
+## Core User Flow
+
+1. User signs up and authenticates via Auth.js.
+2. User creates or joins a workspace (multi-tenant boundary).
+3. User defines an AI workflow (prompt + input structure).
+4. User triggers workflow execution.
+5. System enqueues job into Redis (BullMQ queue).
+6. Worker processes job asynchronously using OpenAI API.
+7. Execution result is stored in PostgreSQL.
+8. Real-time update is pushed to client (status + output).
+9. User views execution history and results.
+
+---
+
+## Features
+
+### Authentication & Workspaces
+
+- Secure session-based authentication
+- Multi-tenant workspace creation and membership system
+- Role-based access control (Owner, Admin, Member)
+
+---
+
+### AI Workflow Engine
+
+- Create reusable AI workflows using structured prompts
+- Execute workflows asynchronously via job queue system
+- Store execution history and outputs
+
+---
+
+### Job Queue System
+
+- Redis + BullMQ-based background processing
+- Decoupled execution from API lifecycle
+- Retry handling and failure tracking
+
+---
+
+### Billing System
+
+- Stripe subscription integration
+- Plan-based access control
+- Webhook-driven billing state updates
+
+---
+
+### Realtime Execution Tracking
+
+- Live workflow execution updates
+- Status tracking (queued, running, completed, failed)
+
+---
+
+### API Access Layer
+
+- API key-based authentication for external usage
+- Rate limiting per workspace and plan
+
+---
+
+## Scope
+
+### In Scope
+
+- Multi-tenant SaaS architecture
+- AI workflow creation and execution system
+- Background job processing with Redis queues
+- Role-based access control system
+- Stripe subscription billing
+- Execution tracking and history
+- API key access layer
+
+---
+
+### Out of Scope
+
+- Real-time collaboration editing (Google Docs-style)
+- Advanced AI agent orchestration systems
+- Multi-region infrastructure deployment
+- Mobile application
+- Offline execution support
+
+---
+
+## Success Criteria
+
+1. A user can create a workspace, define a workflow, and execute it end-to-end successfully.
+2. All workflow executions are processed asynchronously via queue workers without blocking API routes.
+3. Workspace isolation is strictly enforced across all database queries.
+4. Subscription plans correctly restrict feature access via Stripe billing state.
+5. Workflow execution results are stored, retrievable, and tracked with status history.
