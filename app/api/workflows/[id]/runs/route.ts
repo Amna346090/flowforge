@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  createWorkflowRun,
-  getRunsByWorkflow,
-} from "@/services/workflowRun.service";
-import { getWorkflowById } from "@/services/workflow.service";
-
-function getMockUserId(req: NextRequest): string | null {
-  return req.headers.get("x-user-id");
-}
+import { createWorkflowRun, getRunsByWorkflow } from "@/services/workflowRun.service";
+import { getSession } from "@/lib/session";
 
 // POST /api/workflows/[id]/runs
 export async function POST(
@@ -15,11 +8,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = getMockUserId(req);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    const user = await getSession();
     const { id: workflowId } = await params;
     const body = await req.json();
     const { input } = body;
@@ -28,24 +17,16 @@ export async function POST(
       return NextResponse.json({ error: "input is required" }, { status: 400 });
     }
 
-    // Resolve workspaceId from the workflow
-    const workflow = await getWorkflowById(userId, workflowId);
-    if (!workflow) {
-      return NextResponse.json({ error: "Workflow not found" }, { status: 404 });
-    }
-
-    const run = await createWorkflowRun(userId, {
-      workflowId,
-      workspaceId: workflow.workspaceId,
-      input,
-    });
-
+    const run = await createWorkflowRun(user.id, workflowId, input);
     return NextResponse.json(run, { status: 201 });
   } catch (error: any) {
-    if (error.message === "Workflow not found") {
-      return NextResponse.json({ error: error.message }, { status: 404 });
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (error.message === "Not authorized to access this workspace") {
+    if (
+      error.message === "Workflow not found" ||
+      error.message === "Not authorized to access this workspace"
+    ) {
       return NextResponse.json({ error: error.message }, { status: 403 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -54,23 +35,22 @@ export async function POST(
 
 // GET /api/workflows/[id]/runs
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = getMockUserId(req);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    const user = await getSession();
     const { id: workflowId } = await params;
-    const runs = await getRunsByWorkflow(userId, workflowId);
+    const runs = await getRunsByWorkflow(user.id, workflowId);
     return NextResponse.json(runs);
   } catch (error: any) {
-    if (error.message === "Workflow not found") {
-      return NextResponse.json({ error: error.message }, { status: 404 });
+    if (error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (error.message === "Not authorized to access this workspace") {
+    if (
+      error.message === "Workflow not found" ||
+      error.message === "Not authorized to access this workspace"
+    ) {
       return NextResponse.json({ error: error.message }, { status: 403 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
