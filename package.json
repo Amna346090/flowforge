@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:workspace": "tsx --env-file=.env --tsconfig tsconfig.json scripts/test-workspace.ts",
-    "db:seed": "tsx --env-file=.env --tsconfig tsconfig.json prisma/seed.ts"
+    "db:seed": "tsx --env-file=.env --tsconfig tsconfig.json prisma/seed.ts",
+    "worker": "tsx --env-file=.env --tsconfig tsconfig.json worker/index.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

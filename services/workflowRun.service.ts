@@ -13,8 +13,6 @@ async function assertMembership(userId: string, workspaceId: string) {
   return membership;
 }
 
-// ── User-facing functions (RBAC enforced) ─────────────────────────────────────
-
 export async function createWorkflowRun(
   userId: string,
   data: {
@@ -68,8 +66,6 @@ export async function getRunsByWorkspace(userId: string, workspaceId: string) {
     orderBy: { createdAt: "desc" },
   });
 }
-
-// ── Worker-only functions (called internally by BullMQ — no user RBAC) ────────
 
 export async function markRunStarted(id: string) {
   return db.workflowRun.update({
