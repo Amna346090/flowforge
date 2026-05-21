@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createWorkspace, listUserWorkspaces } from "@/services/workspace.service";
 import { getSession } from "@/lib/session";
+import { createWorkspaceSchema } from "@/lib/validations/workspace";
+import { parseBody } from "@/lib/validations/parse";
 
 // POST /api/workspaces
 export async function POST(req: NextRequest) {
@@ -8,13 +10,13 @@ export async function POST(req: NextRequest) {
     const user = await getSession();
 
     const body = await req.json();
-    const { name } = body;
+    const parsed = parseBody(createWorkspaceSchema, body);
 
-    if (!name || typeof name !== "string") {
-      return NextResponse.json({ error: "name is required" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    const workspace = await createWorkspace(user.id, name);
+    const workspace = await createWorkspace(user.id, parsed.data.name);
     return NextResponse.json(workspace, { status: 201 });
   } catch (error: any) {
     if (error.message === "Unauthorized") {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addMember, getMembersByWorkspace } from "@/services/membership.service";
-import { MembershipRole } from "@/generated/prisma/client";
 import { getSession } from "@/lib/session";
+import { addMemberSchema } from "@/lib/validations/membership";
+import { parseBody } from "@/lib/validations/parse";
 
 // GET /api/workspaces/[id]/members
 export async function GET(
@@ -33,19 +34,13 @@ export async function POST(
     const user = await getSession();
     const { id: workspaceId } = await params;
     const body = await req.json();
-    const { userId: targetUserId, role } = body;
+    const parsed = parseBody(addMemberSchema, body);
 
-    if (!targetUserId || typeof targetUserId !== "string") {
-      return NextResponse.json({ error: "userId is required" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    const validRoles = Object.values(MembershipRole);
-    if (!role || !validRoles.includes(role)) {
-      return NextResponse.json(
-        { error: `role must be one of: ${validRoles.join(", ")}` },
-        { status: 400 }
-      );
-    }
+    const { userId: targetUserId, role } = parsed.data;
 
     const member = await addMember(user.id, { userId: targetUserId, workspaceId, role });
     return NextResponse.json(member, { status: 201 });

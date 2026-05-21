@@ -1,26 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { registerSchema } from "@/lib/validations/auth";
+import { parseBody } from "@/lib/validations/parse";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, password } = body;
+    const parsed = parseBody(registerSchema, body);
 
-    if (!name || typeof name !== "string") {
-      return NextResponse.json({ error: "name is required" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "email is required" }, { status: 400 });
-    }
-
-    if (!password || typeof password !== "string" || password.length < 8) {
-      return NextResponse.json(
-        { error: "password must be at least 8 characters" },
-        { status: 400 }
-      );
-    }
+    const { name, email, password } = parsed.data;
 
     const existing = await db.user.findUnique({ where: { email } });
     if (existing) {

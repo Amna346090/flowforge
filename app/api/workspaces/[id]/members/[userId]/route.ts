@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateMemberRole, removeMember } from "@/services/membership.service";
-import { MembershipRole } from "@/generated/prisma/client";
 import { getSession } from "@/lib/session";
+import { updateMemberRoleSchema } from "@/lib/validations/membership";
+import { parseBody } from "@/lib/validations/parse";
 
 // PATCH /api/workspaces/[id]/members/[userId]
 export async function PATCH(
@@ -12,15 +13,13 @@ export async function PATCH(
     const user = await getSession();
     const { id: workspaceId, userId: targetUserId } = await params;
     const body = await req.json();
-    const { role } = body;
+    const parsed = parseBody(updateMemberRoleSchema, body);
 
-    const validRoles = Object.values(MembershipRole);
-    if (!role || !validRoles.includes(role)) {
-      return NextResponse.json(
-        { error: `role must be one of: ${validRoles.join(", ")}` },
-        { status: 400 }
-      );
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+
+    const { role } = parsed.data;
 
     const updated = await updateMemberRole(user.id, targetUserId, workspaceId, role);
     return NextResponse.json(updated);

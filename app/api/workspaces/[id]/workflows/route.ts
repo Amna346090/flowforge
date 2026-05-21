@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createWorkflow, getWorkflowsByWorkspace } from "@/services/workflow.service";
 import { getSession } from "@/lib/session";
+import { createWorkflowSchema } from "@/lib/validations/workflow";
+import { parseBody } from "@/lib/validations/parse";
 
 // POST /api/workspaces/[id]/workflows
 export async function POST(
@@ -11,13 +13,13 @@ export async function POST(
     const user = await getSession();
     const { id: workspaceId } = await params;
     const body = await req.json();
-    const { name, definition } = body;
+    const parsed = parseBody(createWorkflowSchema, body);
 
-    if (!name || typeof name !== "string") {
-      return NextResponse.json({ error: "name is required" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    const workflow = await createWorkflow(user.id, workspaceId, { name, definition });
+    const workflow = await createWorkflow(user.id, workspaceId, parsed.data);
     return NextResponse.json(workflow, { status: 201 });
   } catch (error: any) {
     if (error.message === "Unauthorized") {
