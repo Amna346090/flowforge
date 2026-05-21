@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getWorkflowById, updateWorkflow, deleteWorkflow } from "@/services/workflow.service";
 import { getSession } from "@/lib/session";
+import { updateWorkflowSchema } from "@/lib/validations/workflow";
+import { parseBody } from "@/lib/validations/parse";
 
 // GET /api/workflows/[id]
 export async function GET(
@@ -35,7 +37,13 @@ export async function PATCH(
     const user = await getSession();
     const { id } = await params;
     const body = await req.json();
-    const workflow = await updateWorkflow(user.id, id, body);
+    const parsed = parseBody(updateWorkflowSchema, body);
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const workflow = await updateWorkflow(user.id, id, parsed.data);
     return NextResponse.json(workflow);
   } catch (error: any) {
     if (error.message === "Unauthorized") {

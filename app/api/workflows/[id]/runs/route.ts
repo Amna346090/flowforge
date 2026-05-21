@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@/generated/prisma/client";
 import { createWorkflowRun, getRunsByWorkflow } from "@/services/workflowRun.service";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { workflowQueue } from "@/lib/queue";
 import type { WorkflowJobData } from "@/lib/queue";
+import { createWorkflowRunSchema } from "@/lib/validations/workflowRun";
+import { parseBody } from "@/lib/validations/parse";
 
 // POST /api/workflows/[id]/runs
 export async function POST(
@@ -14,11 +17,14 @@ export async function POST(
     const user = await getSession();
     const { id: workflowId } = await params;
     const body = await req.json();
-    const { input } = body;
+    const parsed = parseBody(createWorkflowRunSchema, body);
 
-    if (input === undefined) {
-      return NextResponse.json({ error: "input is required" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+
+    const { input } = parsed.data;
+    const jsonInput = input as Prisma.InputJsonValue;
 
     const workflow = await db.workflow.findUnique({ where: { id: workflowId } });
     if (!workflow) {
@@ -28,14 +34,14 @@ export async function POST(
     const run = await createWorkflowRun(user.id, {
       workflowId,
       workspaceId: workflow.workspaceId,
-      input,
+      input: jsonInput,
     });
 
     const jobData: WorkflowJobData = {
       runId: run.id,
       workflowId,
       workspaceId: workflow.workspaceId,
-      input,
+      input: jsonInput,
     };
     await workflowQueue.add("run", jobData, {
       attempts: 3,
