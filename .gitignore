@@ -41,6 +41,3 @@ yarn-error.log*
 next-env.d.ts
 
 /generated/prisma
-
-# Local test artifacts
-cookies.txt
