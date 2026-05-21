@@ -75,6 +75,14 @@ npm run worker
 
 Open [http://localhost:3000](http://localhost:3000), register an account, create a workspace, add a workflow, and trigger a run.
 
+Optional — seed demo data (local dev):
+
+```bash
+npm run db:seed
+```
+
+Then log in with `demo@flowforge.com` / `demo12345` to open **Demo Workspace** with two example workflows.
+
 ### 5. Tests
 
 ```bash

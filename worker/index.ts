@@ -2,6 +2,9 @@ import "dotenv/config";
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import { markRunStarted, markRunFinished } from "../services/workflowRun.service";
+import { getWorkflowForExecution } from "../services/workflow.service";
+import { parseWorkflowDefinition } from "../lib/workflow/definition";
+import { executeWorkflow } from "../lib/workflow/execute";
 import type { WorkflowJobData } from "../lib/queue";
 import type { Prisma } from "../generated/prisma/client";
 
@@ -15,18 +18,18 @@ const worker = new Worker<WorkflowJobData>(
     const { runId, workflowId, input } = job.data;
 
     await markRunStarted(runId);
-    await simulateWorkflow(input);
+
+    const workflow = await getWorkflowForExecution(workflowId);
+    const definition = parseWorkflowDefinition(workflow.definition);
+    const result = executeWorkflow(definition, input);
+
     await markRunFinished(runId, {
       status: "SUCCESS",
-      output: { message: "Workflow completed successfully", input: input as Prisma.InputJsonValue },
+      output: result as Prisma.InputJsonValue,
     });
   },
   { connection }
 );
-
-async function simulateWorkflow(_input: unknown): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-}
 
 worker.on("failed", async (job, err) => {
   if (job?.data?.runId) {

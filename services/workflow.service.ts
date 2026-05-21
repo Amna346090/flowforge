@@ -51,6 +51,16 @@ export async function getWorkflowsByWorkspace(
   return db.workflow.findMany({ where: { workspaceId } });
 }
 
+export async function getWorkflowForExecution(workflowId: string) {
+  const workflow = await db.workflow.findUnique({ where: { id: workflowId } });
+
+  if (!workflow) {
+    throw new Error("Workflow not found");
+  }
+
+  return workflow;
+}
+
 export async function updateWorkflow(
   userId: string,
   id: string,
